@@ -8,8 +8,6 @@
 #define MAIN_WINDOW_NAME L"Phonebook"
 #define IDC_LISTVIEW 1111
 
-const std::vector<LPCWSTR> columnsName{ L"1", L"2", L"3" };
-
 VOID InsertListViewItem(HWND hWndListView)
 {
 	LVITEM lvI;
@@ -33,11 +31,11 @@ VOID InitListViewColumns(HWND hWndListView)
 	
 	GetClientRect(hWndListView, &rcListView);
 	lvc.mask = LVCF_WIDTH | LVCF_TEXT;
-	lvc.cx = (rcListView.right - rcListView.left) / columnsName.size();
-	for (int i = 0; i < columnsName.size(); i++) {
-		lvc.pszText = const_cast<LPWSTR>(columnsName[i]);
-		ListView_InsertColumn(hWndListView, i, &lvc);
-	}
+	//lvc.cx = (rcListView.right - rcListView.left) / columnsName.size();
+	//for (int i = 0; i < columnsName.size(); i++) {
+	//	lvc.pszText = const_cast<wchar_t*>(columnsName[i]);
+	//	ListView_InsertColumn(hWndListView, i, &lvc);
+	//}
 }
 
 HWND CreateListView(HWND hWndParent)
@@ -61,7 +59,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	if (uMsg == WM_CREATE) {
 		hWndListView = CreateListView(hWnd);
 		InitListViewColumns(hWndListView);
-		InsertListViewItem(hWndListView);
 		ShowWindow(hWndListView, SW_SHOWDEFAULT);
 	}
 
@@ -86,7 +83,7 @@ INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	wc.hInstance = hInstance;
 
 	RegisterClassEx(&wc);
-	hMainWindow = CreateWindowEx(NULL, MAIN_CLASS_NAME, MAIN_WINDOW_NAME, WS_OVERLAPPED | WS_SYSMENU, 400, 100, 500, 600, NULL, NULL, hInstance, NULL);
+	hMainWindow = CreateWindowEx(NULL, MAIN_CLASS_NAME, MAIN_WINDOW_NAME, WS_OVERLAPPED | WS_SYSMENU, 400, 100, 576, 600, NULL, NULL, hInstance, NULL);
 	
 	ShowWindow(hMainWindow, nCmdShow);
 	UpdateWindow(hMainWindow);
