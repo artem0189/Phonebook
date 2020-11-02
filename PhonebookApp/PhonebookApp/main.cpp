@@ -1,6 +1,7 @@
 #include <windows.h>
 #include <commctrl.h>
 #include <vector>
+#include "PhonebookCore/Phonebook.h"
 
 #pragma comment(lib, "ComCtl32.Lib")
 
@@ -31,11 +32,11 @@ VOID InitListViewColumns(HWND hWndListView)
 	
 	GetClientRect(hWndListView, &rcListView);
 	lvc.mask = LVCF_WIDTH | LVCF_TEXT;
-	//lvc.cx = (rcListView.right - rcListView.left) / columnsName.size();
-	//for (int i = 0; i < columnsName.size(); i++) {
-	//	lvc.pszText = const_cast<wchar_t*>(columnsName[i]);
-	//	ListView_InsertColumn(hWndListView, i, &lvc);
-	//}
+	lvc.cx = (rcListView.right - rcListView.left) / columnsName.size();
+	for (int i = 0; i < columnsName.size(); i++) {
+		lvc.pszText = const_cast<wchar_t*>(columnsName[i]);
+		ListView_InsertColumn(hWndListView, i, &lvc);
+	}
 }
 
 HWND CreateListView(HWND hWndParent)
@@ -75,6 +76,8 @@ INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	HWND hMainWindow;
 	MSG msg;
 	WNDCLASSEX wc;
+
+	GetPhonebook();
 
 	ZeroMemory(&wc, sizeof(wc));
 	wc.cbSize = sizeof(wc);
