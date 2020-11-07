@@ -1,5 +1,6 @@
 #pragma once
 
+#include <string>
 #include <vector>
 
 #ifdef PHONEBOOKCORE_EXPORTS
@@ -8,28 +9,20 @@
 #define PHONEBOOKCORE_API __declspec(dllimport)
 #endif
 
-const std::vector<const wchar_t*> columnsName{ L"1", L"2", L"3", L"4", L"5", L"6", L"7", L"8" };
+const std::vector<std::wstring> columnsName{ TEXT("Telephone"), TEXT("LastName"), TEXT("FirstName"), TEXT("Patronymic"), TEXT("Street"), TEXT("House"), TEXT("Housing"), TEXT("Apartament") };
 
 struct PhonebookRecord
 {
-	const wchar_t* telephone;
-	const wchar_t* lastName;
-	const wchar_t* firstName;
-	const wchar_t* patronymic;
-	const wchar_t* streetName;
+	std::wstring telephone;
+	std::wstring lastName;
+	std::wstring firstName;
+	std::wstring patronymic;
+	std::wstring streetName;
 	unsigned int houseNumber;
 	unsigned int housingNumber;
 	unsigned int apartamentNumber;
 };
 
-#ifdef __cplusplus   
-extern "C" {
-#endif
+PHONEBOOKCORE_API std::vector<PhonebookRecord> __cdecl GetPhonebook();
 
-	PHONEBOOKCORE_API void __cdecl GetPhonebook();
-
-	PHONEBOOKCORE_API void __cdecl Search(PhonebookRecord searchParam);
-
-#ifdef __cplusplus
-}
-#endif
+PHONEBOOKCORE_API std::vector<PhonebookRecord> __cdecl Search(PhonebookRecord searchParam);
