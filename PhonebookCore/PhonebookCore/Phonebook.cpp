@@ -3,7 +3,7 @@
 #include <iostream>
 #include <string>
 #include <fstream>
-#include <sstream>
+#include <algorithm>
 #include "Phonebook.h"
 #include "Index.h"
 
@@ -74,13 +74,21 @@ PhonebookRecord ParseLine(std::wstring line)
     return { tokens[0], tokens[1], tokens[2], tokens[3], tokens[4], (unsigned int)std::stoi(tokens[5]), (unsigned int)std::stoi(tokens[6]), (unsigned int)std::stoi(tokens[7]) };
 }
 
-VOID AddVector(std::vector<PhonebookRecord*>* first, std::vector<PhonebookRecord*> second)
+std::vector<PhonebookRecord*> Intersection(std::vector<PhonebookRecord*> first, std::vector<PhonebookRecord*> second)
 {
-    for (int i = 0; i < second.size(); i++) {
-        if (std::find(first->begin(), first->end(), second[i]) == first->end()) {
-            first->push_back(second[i]);
-        }
+    std::vector<PhonebookRecord*> result;
+
+    if (!first.empty()) {
+        std::sort(first.begin(), first.end());
+        std::sort(second.begin(), second.end());
+
+        std::set_intersection(first.begin(), first.end(), second.begin(), second.end(), back_inserter(result));
     }
+    else {
+        result = second;
+    }
+
+    return result;
 }
 
 PHONEBOOKCORE_API std::vector<PhonebookRecord> __cdecl GetPhonebook()
@@ -92,29 +100,37 @@ PHONEBOOKCORE_API std::vector<PhonebookRecord> __cdecl Search(PhonebookRecord se
 {
     bool isEmpty = true;
     std::vector<PhonebookRecord*> result;
-    if (!(isEmpty &= searchParam.telephone.empty())) {
-        AddVector(&result, telephoneIndex->Search(telephoneIndex->root, searchParam.telephone));
+    if (!(searchParam.telephone.empty())) {
+        result = Intersection(result, telephoneIndex->Search(telephoneIndex->root, searchParam.telephone));
+        isEmpty &= false;
     }
-    if (!(isEmpty &= searchParam.lastName.empty())) {
-        AddVector(&result, lastNameIndex->Search(lastNameIndex->root, searchParam.lastName));
+    if (!(searchParam.lastName.empty())) {
+        result = Intersection(result, lastNameIndex->Search(lastNameIndex->root, searchParam.lastName));
+        isEmpty &= false;
     }
-    if (!(isEmpty &= searchParam.firstName.empty())) {
-        AddVector(&result, firstNameIndex->Search(firstNameIndex->root, searchParam.firstName));
+    if (!(searchParam.firstName.empty())) {
+        result = Intersection(result, firstNameIndex->Search(firstNameIndex->root, searchParam.firstName));
+        isEmpty &= false;
     }
-    if (!(isEmpty &= searchParam.patronymic.empty())) {
-        AddVector(&result, patronymicIndex->Search(patronymicIndex->root, searchParam.patronymic));
+    if (!(searchParam.patronymic.empty())) {
+        result = Intersection(result, patronymicIndex->Search(patronymicIndex->root, searchParam.patronymic));
+        isEmpty &= false;
     }
-    if (!(isEmpty &= searchParam.streetName.empty())) {
-        AddVector(&result, streetIndex->Search(streetIndex->root, searchParam.streetName));
+    if (!(searchParam.streetName.empty())) {
+        result = Intersection(result, streetIndex->Search(streetIndex->root, searchParam.streetName));
+        isEmpty &= false;
     }
-    if (!(isEmpty &= searchParam.houseNumber == 0)) {
-        AddVector(&result, houseIndex->Search(houseIndex->root, searchParam.houseNumber));
+    if (searchParam.houseNumber != 0) {
+        result = Intersection(result, houseIndex->Search(houseIndex->root, searchParam.houseNumber));
+        isEmpty &= false;
     }
-    if (!(isEmpty &= searchParam.housingNumber == 0)) {
-        AddVector(&result, housingIndex->Search(housingIndex->root, searchParam.housingNumber));
+    if (searchParam.housingNumber != 0) {
+        result = Intersection(result, housingIndex->Search(housingIndex->root, searchParam.housingNumber));
+        isEmpty &= false;
     }
-    if (!(isEmpty &= searchParam.apartamentNumber == 0)) {
-        AddVector(&result, apartamentIndex->Search(apartamentIndex->root, searchParam.apartamentNumber));
+    if (searchParam.apartamentNumber != 0) {
+        result = Intersection(result, apartamentIndex->Search(apartamentIndex->root, searchParam.apartamentNumber));
+        isEmpty &= false;
     }
 
     if (!isEmpty) {

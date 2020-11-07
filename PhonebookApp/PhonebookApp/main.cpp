@@ -35,11 +35,51 @@ LRESULT CALLBACK DynamicEditProc(HWND hEdit, UINT uMsg, WPARAM wParam, LPARAM lP
 	case WM_KEYDOWN:
 	{
 		if (wParam == VK_RETURN) {
-			PhonebookRecord changedData;
-			//if (TryChange(GetText(hEdit, &changeData))) {
-			//  phoneBook[htInfo.iItem] = changedData;
-			//	ListView_SetItemText(hListView, htInfo.iItem, htInfo.iSubItem, const_cast<LPWSTR>(changeData.c_str()));
-			//}
+			PhonebookRecord changedData = phoneBook[htInfo.iItem];
+			std::wstring text = GetText(hEdit);
+			switch (htInfo.iSubItem) {
+			case 0:
+				changedData.telephone = text;
+				break;
+			case 1:
+				changedData.lastName = text;
+				break;
+			case 2:
+				changedData.firstName = text;
+				break;
+			case 3:
+				changedData.patronymic = text;
+				break;
+			case 4:
+				changedData.streetName = text;
+				break;
+			case 5:
+				try
+				{
+					changedData.houseNumber = std::stoi(text);
+				}
+				catch (...) { }
+				text = std::to_wstring(changedData.houseNumber);
+				break;
+			case 6:
+				try
+				{
+					changedData.housingNumber = std::stoi(text);
+				}
+				catch (...) {}
+				text = std::to_wstring(changedData.housingNumber);
+				break;
+			case 7:
+				try
+				{
+					changedData.apartamentNumber = std::stoi(text);
+				}
+				catch (...) {}
+				text = std::to_wstring(changedData.apartamentNumber);
+				break;
+			}
+			// Change
+			ListView_SetItemText(hListView, htInfo.iItem, htInfo.iSubItem, const_cast<LPWSTR>(text.c_str()));
 			DestroyWindow(hEdit);
 		}
 		break;
@@ -57,39 +97,60 @@ LRESULT CALLBACK DynamicEditProc(HWND hEdit, UINT uMsg, WPARAM wParam, LPARAM lP
 
 LRESULT CALLBACK FilterEditProc(HWND hEdit, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData)
 {
+	static WPARAM previousWparam;
+
 	switch (uMsg) {
-	case MY_COMMAND:
-		switch (HIWORD(wParam)) {
-		case EN_CHANGE:
-			switch (LOWORD(wParam)) {
-			case IDC_FILTER_EDIT + 1:
-				searchRecord.telephone = GetText(hEdit);
-				break;
-			case IDC_FILTER_EDIT + 2:
-				searchRecord.lastName = GetText(hEdit);
-				break;
-			case IDC_FILTER_EDIT + 3:
-				searchRecord.firstName = GetText(hEdit);
-				break;
-			case IDC_FILTER_EDIT + 4:
-				searchRecord.patronymic = GetText(hEdit);
-				break;
-			case IDC_FILTER_EDIT + 5:
-				searchRecord.streetName = GetText(hEdit);
-				break;
-			case IDC_FILTER_EDIT + 6:
-				//
-				break;
-			case IDC_FILTER_EDIT + 7:
-				//
-				break;
-			case IDC_FILTER_EDIT + 8:
-				//
-				break;
+	case WM_KILLFOCUS:
+	{
+		std::wstring text = GetText(hEdit);
+		switch (GetWindowLong(hEdit, GWL_ID)) {
+		case IDC_FILTER_EDIT + 1:
+			searchRecord.telephone = text;
+			break;
+		case IDC_FILTER_EDIT + 2:
+			searchRecord.lastName = text;
+			break;
+		case IDC_FILTER_EDIT + 3:
+			searchRecord.firstName = text;
+			break;
+		case IDC_FILTER_EDIT + 4:
+			searchRecord.patronymic = text;
+			break;
+		case IDC_FILTER_EDIT + 5:
+			searchRecord.streetName = text;
+			break;
+		case IDC_FILTER_EDIT + 6:
+			try
+			{
+				searchRecord.houseNumber = std::stoi(text != TEXT("") ? text : TEXT("0"));
+			}
+			catch(...) 
+			{
+				SetWindowText(hEdit, std::to_wstring(searchRecord.houseNumber).c_str());
+			}
+			break;
+		case IDC_FILTER_EDIT + 7:
+			try
+			{
+				searchRecord.housingNumber = std::stoi(text != TEXT("") ? text : TEXT("0"));
+			}
+			catch (...)
+			{
+				SetWindowText(hEdit, std::to_wstring(searchRecord.housingNumber).c_str());
+			}
+			break;
+		case IDC_FILTER_EDIT + 8:
+			try
+			{
+				searchRecord.apartamentNumber = std::stoi(text != TEXT("") ? text : TEXT("0"));
+			}
+			catch (...)
+			{
+				SetWindowText(hEdit, std::to_wstring(searchRecord.apartamentNumber).c_str());
 			}
 			break;
 		}
-		break;
+	}
 	}
 	return DefSubclassProc(hEdit, uMsg, wParam, lParam);
 }
