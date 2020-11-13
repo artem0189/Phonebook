@@ -10,13 +10,14 @@
 #define MY_NOTIFY (WM_NOTIFY + 4)
 #define IDC_FILTER_EDIT 1000
 #define IDC_BUTTON_FIND 2000
+#define IDC_BUTTON_REFRESH 2001
 
 CONST WCHAR MainClassName[] = TEXT("MainClass");
 CONST WCHAR MainWindowName[] = TEXT("Window");
 
 HWND hMainWindow, hListView;
 LVHITTESTINFO htInfo;
-std::vector<PhonebookRecord> phoneBook;
+std::vector<PhonebookRecord*> phoneBook;
 PhonebookRecord searchRecord;
 
 LRESULT CALLBACK MainWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
@@ -25,7 +26,7 @@ LRESULT CALLBACK FilterEditProc(HWND hEdit, UINT uMsg, WPARAM wParam, LPARAM lPa
 LRESULT CALLBACK DynamicEditProc(HWND hEdit, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData);
 HWND CreateListView(HWND hWndParent, std::vector<std::wstring> columsName);
 VOID ClearListView(HWND hListView);
-VOID InsertListViewItems(HWND hListView, std::vector<PhonebookRecord> items);
+VOID InsertListViewItems(HWND hListView, std::vector<PhonebookRecord*> items);
 VOID CreateFilter(HWND hWndParent, std::vector<std::wstring> filterName);
 std::wstring GetText(HWND hEdit);
 
@@ -35,51 +36,7 @@ LRESULT CALLBACK DynamicEditProc(HWND hEdit, UINT uMsg, WPARAM wParam, LPARAM lP
 	case WM_KEYDOWN:
 	{
 		if (wParam == VK_RETURN) {
-			PhonebookRecord changedData = phoneBook[htInfo.iItem];
-			std::wstring text = GetText(hEdit);
-			switch (htInfo.iSubItem) {
-			case 0:
-				changedData.telephone = text;
-				break;
-			case 1:
-				changedData.lastName = text;
-				break;
-			case 2:
-				changedData.firstName = text;
-				break;
-			case 3:
-				changedData.patronymic = text;
-				break;
-			case 4:
-				changedData.streetName = text;
-				break;
-			case 5:
-				try
-				{
-					changedData.houseNumber = std::stoi(text);
-				}
-				catch (...) { }
-				text = std::to_wstring(changedData.houseNumber);
-				break;
-			case 6:
-				try
-				{
-					changedData.housingNumber = std::stoi(text);
-				}
-				catch (...) {}
-				text = std::to_wstring(changedData.housingNumber);
-				break;
-			case 7:
-				try
-				{
-					changedData.apartamentNumber = std::stoi(text);
-				}
-				catch (...) {}
-				text = std::to_wstring(changedData.apartamentNumber);
-				break;
-			}
-			// Change
-			ListView_SetItemText(hListView, htInfo.iItem, htInfo.iSubItem, const_cast<LPWSTR>(text.c_str()));
+			ChangeData(phoneBook[htInfo.iItem], htInfo.iSubItem, GetText(hEdit));
 			DestroyWindow(hEdit);
 		}
 		break;
@@ -87,10 +44,6 @@ LRESULT CALLBACK DynamicEditProc(HWND hEdit, UINT uMsg, WPARAM wParam, LPARAM lP
 	case WM_KILLFOCUS:
 		DestroyWindow(hEdit);
 		break;
-	//case WM_DESTROY:
-	//	PostQuitMessage(0);
-	//	RemoveWindowSubclass(hEdit, DynamicEditProc, 2);
-	//	return NULL;
 	}
 	return DefSubclassProc(hEdit, uMsg, wParam, lParam);
 }
@@ -105,19 +58,24 @@ LRESULT CALLBACK FilterEditProc(HWND hEdit, UINT uMsg, WPARAM wParam, LPARAM lPa
 		std::wstring text = GetText(hEdit);
 		switch (GetWindowLong(hEdit, GWL_ID)) {
 		case IDC_FILTER_EDIT + 1:
-			searchRecord.telephone = text;
+			ZeroMemory(searchRecord.telephone, sizeof(searchRecord.telephone));
+			std::copy(std::begin(text), std::end(text), std::begin(searchRecord.telephone));
 			break;
 		case IDC_FILTER_EDIT + 2:
-			searchRecord.lastName = text;
+			ZeroMemory(searchRecord.lastName, sizeof(searchRecord.lastName));
+			std::copy(std::begin(text), std::end(text), std::begin(searchRecord.lastName));
 			break;
 		case IDC_FILTER_EDIT + 3:
-			searchRecord.firstName = text;
+			ZeroMemory(searchRecord.firstName, sizeof(searchRecord.firstName));
+			std::copy(std::begin(text), std::end(text), std::begin(searchRecord.firstName));
 			break;
 		case IDC_FILTER_EDIT + 4:
-			searchRecord.patronymic = text;
+			ZeroMemory(searchRecord.patronymic, sizeof(searchRecord.patronymic));
+			std::copy(std::begin(text), std::end(text), std::begin(searchRecord.patronymic));
 			break;
 		case IDC_FILTER_EDIT + 5:
-			searchRecord.streetName = text;
+			ZeroMemory(searchRecord.streetName, sizeof(searchRecord.streetName));
+			std::copy(std::begin(text), std::end(text), std::begin(searchRecord.streetName));
 			break;
 		case IDC_FILTER_EDIT + 6:
 			try
@@ -179,39 +137,42 @@ LRESULT CALLBACK ListViewProc(HWND hListView, UINT uMsg, WPARAM wParam, LPARAM l
 			break;
 		}
 		case LVN_GETDISPINFO:
+		{
 			plvdi = (NMLVDISPINFO*)lParam;
+			PhonebookRecord* addedItem = phoneBook[plvdi->item.iItem];
 			switch (plvdi->item.iSubItem) {
 			case 0:
-				plvdi->item.pszText = const_cast<LPWSTR>(phoneBook[plvdi->item.iItem].telephone.c_str());
+				plvdi->item.pszText = const_cast<LPWSTR>(addedItem->telephone);
 				break;
 			case 1:
-				plvdi->item.pszText = const_cast<LPWSTR>(phoneBook[plvdi->item.iItem].lastName.c_str());
+				plvdi->item.pszText = const_cast<LPWSTR>(addedItem->lastName);
 				break;
 			case 2:
-				plvdi->item.pszText = const_cast<LPWSTR>(phoneBook[plvdi->item.iItem].firstName.c_str());
+				plvdi->item.pszText = const_cast<LPWSTR>(addedItem->firstName);
 				break;
 			case 3:
-				plvdi->item.pszText = const_cast<LPWSTR>(phoneBook[plvdi->item.iItem].patronymic.c_str());
+				plvdi->item.pszText = const_cast<LPWSTR>(addedItem->patronymic);
 				break;
 			case 4:
-				plvdi->item.pszText = const_cast<LPWSTR>(phoneBook[plvdi->item.iItem].streetName.c_str());
+				plvdi->item.pszText = const_cast<LPWSTR>(addedItem->streetName);
 				break;
 			case 5:
-				temp = std::to_wstring(phoneBook[plvdi->item.iItem].houseNumber);
+				temp = std::to_wstring(addedItem->houseNumber);
 				plvdi->item.pszText = const_cast<LPWSTR>(temp.c_str());
 				break;
 			case 6:
-				temp = std::to_wstring(phoneBook[plvdi->item.iItem].housingNumber);
+				temp = std::to_wstring(addedItem->housingNumber);
 				plvdi->item.pszText = const_cast<LPWSTR>(temp.c_str());
 				break;
 			case 7:
-				temp = std::to_wstring(phoneBook[plvdi->item.iItem].apartamentNumber);
+				temp = std::to_wstring(addedItem->apartamentNumber);
 				plvdi->item.pszText = const_cast<LPWSTR>(temp.c_str());
 				break;
 			}
 			break;
 		}
 		break;
+		}
 	}
 	return DefSubclassProc(hListView, uMsg, wParam, lParam);
 }
@@ -231,9 +192,20 @@ LRESULT CALLBACK MainWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	case WM_COMMAND:
 		switch (HIWORD(wParam)) {
 		case BN_CLICKED:
-			if (LOWORD(wParam) == IDC_BUTTON_FIND) {
+			switch (LOWORD(wParam)) {
+			case IDC_BUTTON_FIND:
+			{
+				std::vector<PhonebookRecord*> search = Search(searchRecord);
+				if (search != phoneBook) {
+					ClearListView(hListView);
+					InsertListViewItems(hListView, search);
+				}
+				break;
+			}
+			case IDC_BUTTON_REFRESH:
 				ClearListView(hListView);
-				InsertListViewItems(hListView, Search(searchRecord));
+				InsertListViewItems(hListView, phoneBook);
+				break;
 			}
 			break;
 		default:
@@ -245,7 +217,7 @@ LRESULT CALLBACK MainWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		SendMessage(((NMHDR*)lParam)->hwndFrom, MY_NOTIFY, wParam, lParam);
 		break;
 	case WM_DESTROY:
-		PostQuitMessage(NULL);
+		PostQuitMessage(0);
 		return NULL;
 	}
 	return DefWindowProc(hWnd, uMsg, wParam, lParam);
@@ -300,7 +272,7 @@ VOID ClearListView(HWND hListView)
 	ListView_DeleteAllItems(hListView);
 }
 
-VOID InsertListViewItems(HWND hListView, std::vector<PhonebookRecord> items)
+VOID InsertListViewItems(HWND hListView, std::vector<PhonebookRecord*> items)
 {
 	LVITEM lvI;
 
@@ -327,11 +299,12 @@ VOID CreateFilter(HWND hWndParent, std::vector<std::wstring> filterName)
 		Edit_SetCueBannerText(hEdit, filterName[i].c_str());
 	}
 	CreateWindowEx(WS_EX_CLIENTEDGE, WC_BUTTON, TEXT("Find"), WS_CHILD | WS_VISIBLE, rcClient.right - 130, 40 * (filterName.size() + 1), 110, 20, hWndParent, (HMENU)IDC_BUTTON_FIND, GetModuleHandle(NULL), NULL);
+	CreateWindowEx(WS_EX_CLIENTEDGE, WC_BUTTON, TEXT("Refresh"), WS_CHILD | WS_VISIBLE, rcClient.right - 130, 40 * (filterName.size() + 1) + 30, 110, 20, hWndParent, (HMENU)IDC_BUTTON_REFRESH, GetModuleHandle(NULL), NULL);
 }
 
 std::wstring GetText(HWND hEdit)
 {
-	TCHAR buffer[512];
+	WCHAR buffer[512];
 	GetWindowText(hEdit, buffer, sizeof(buffer));
 	return buffer;
 }

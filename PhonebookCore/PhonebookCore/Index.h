@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Phonebook.h"
+#include <sstream>
 
 #define CMP_EQ(a, b) ((a) == (b))
 #define CMP_LT(a, b) ((a) < (b))
@@ -21,15 +22,23 @@ struct Node
 };
 
 template <typename T>
+std::wstring ConvertToWstring(T value)
+{
+    std::wostringstream wss;
+    wss << value;
+    return wss.str();
+}
+
+template <typename T>
 class Index
 {
 public:
     Node* root = NULL;
-	Index(std::vector<PhonebookRecord>* phoneBook, ::size_t offset)
+	Index(std::vector<PhonebookRecord*> phoneBook, ::size_t offset)
     {
         this->offset = offset;
-        for (int i = 0; i < phoneBook->size(); i++) {
-            Insert(&((*phoneBook)[i]));
+        for (int i = 0; i < phoneBook.size(); i++) {
+            Insert(phoneBook[i]);
         }
     }
     void Insert(PhonebookRecord* value)
@@ -41,8 +50,10 @@ public:
         }
 
         tmp = root;
+        std::wstring first = ConvertToWstring(*(T*)((::size_t)value + offset));
+        std::wstring second = ConvertToWstring(*(T*)((::size_t)tmp->data[0] + offset));
         while (tmp) {
-            if (CMP_GT(*(T*)((::size_t)value + offset), *(T*)((::size_t)tmp->data[0] + offset))) {
+            if (CMP_GT(first, second)) {
                 if (tmp->right) {
                     tmp = tmp->right;
                     continue;
@@ -52,7 +63,7 @@ public:
                     return;
                 }
             }
-            else if (CMP_LT(*(T*)((::size_t)value + offset), *(T*)((::size_t)tmp->data[0] + offset))) {
+            else if (CMP_LT(first, second)) {
                 if (tmp->left) {
                     tmp = tmp->left;
                     continue;
@@ -62,7 +73,7 @@ public:
                     return;
                 }
             }
-            else if (CMP_EQ(*(T*)((::size_t)value + offset), *(T*)((::size_t)tmp->data[0] + offset))) {
+            else if (CMP_EQ(first, second)) {
                 tmp->data.push_back(value);
                 return;
             }
@@ -73,12 +84,14 @@ public:
     }
 	std::vector<PhonebookRecord*> Search(Node* root, T value)
     {
+        std::wstring first = ConvertToWstring(*(T*)((::size_t)root->data[0] + offset));
+        std::wstring second = ConvertToWstring(value);
         while (root) {
-            if (CMP_GT(*(T*)((::size_t)root->data[0] + offset), value)) {
+            if (CMP_GT(first, second)) {
                 root = root->left;
                 continue;
             }
-            else if (CMP_LT(*(T*)((::size_t)root->data[0] + offset), value)) {
+            else if (CMP_LT(first, second)) {
                 root = root->right;
                 continue;
             }
