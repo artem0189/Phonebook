@@ -51,8 +51,8 @@ public:
 
         tmp = root;
         std::wstring first = ConvertToWstring(*(T*)((::size_t)value + offset));
-        std::wstring second = ConvertToWstring(*(T*)((::size_t)tmp->data[0] + offset));
         while (tmp) {
+            std::wstring second = ConvertToWstring(*(T*)((::size_t)tmp->data[0] + offset));
             if (CMP_GT(first, second)) {
                 if (tmp->right) {
                     tmp = tmp->right;
@@ -84,15 +84,15 @@ public:
     }
 	std::vector<PhonebookRecord*> Search(Node* root, T value)
     {
-        std::wstring first = ConvertToWstring(*(T*)((::size_t)root->data[0] + offset));
-        std::wstring second = ConvertToWstring(value);
+        std::wstring first = ConvertToWstring(value);
         while (root) {
+            std::wstring second = ConvertToWstring(*(T*)((::size_t)root->data[0] + offset));
             if (CMP_GT(first, second)) {
-                root = root->left;
+                root = root->right;
                 continue;
             }
             else if (CMP_LT(first, second)) {
-                root = root->right;
+                root = root->left;
                 continue;
             }
             else {
